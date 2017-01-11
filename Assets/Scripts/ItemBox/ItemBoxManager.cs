@@ -53,15 +53,6 @@ public class ItemBoxManager : MonoBehaviour
 
     void Start()
     {
-        var items = itemManager.items;
-        for (int i = 0; i < items.Count; i++)
-        {
-            for (int k = 0; k < items[i].Count; k++)
-            {
-                itemBoxs[i][k].SetActive(false);
-            }
-        }
-
         StartCoroutine(updateItemBoxs());
     }
 
@@ -102,6 +93,15 @@ public class ItemBoxManager : MonoBehaviour
         }
     }
 
+    public void SetAvtiveAllItemBoxs(bool flag)
+    {
+        foreach(var itemCategory in itemBoxs)
+        {
+            foreach (var itemBox_ in itemCategory)
+                itemBox_.SetActive(flag);
+        }
+    }
+
     // itemBoxを表示するかしないか変える
     // flag : ture ⇒ 表示, false ⇒ 非表示
     public void SetActiveItemBoxs(bool flag)
@@ -124,5 +124,18 @@ public class ItemBoxManager : MonoBehaviour
 
         for (int i = 0; i < itemBoxs[DisplayCategory].Count; i++)
             itemBoxs[DisplayCategory][i].SetActive(true);
+    }
+
+    public void LoadItem()
+    {
+        var items = itemManager.items;
+        for (int i = 0; i < items.Count; i++)
+        {
+            for (int k = 0; k < items[i].Count; k++)
+            {
+                var itemStatus = items[i][k].GetComponent<ItemStatus>();
+                itemBoxs[i][k].GetComponent<ItemBoxStatus>().SetItemHaveNum(itemStatus.num);
+            }
+        }
     }
 }

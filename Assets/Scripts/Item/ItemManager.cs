@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 public class ItemManager : MonoBehaviour
 {
@@ -14,6 +15,106 @@ public class ItemManager : MonoBehaviour
     public int itemMaxId = 0;
 
     private ItemManager instance = null;
+
+    void LoadItem()
+    {
+        TextAsset csvFile = Resources.Load("Data/Item") as TextAsset;
+        StringReader reader = new StringReader(csvFile.text);
+
+        List<string[]> itemDatas = new List<string[]>();
+        while (reader.Peek() > -1)
+        {
+            string line = reader.ReadLine();
+            itemDatas.Add(line.Split(','));
+        }
+
+        foreach (var itemCategory in itemDatas)
+        {
+            List<GameObject> itemCategory_ = new List<GameObject>();
+            for (int i = 0; i < 9; i++)
+                itemCategory_.Add(Instantiate(itemBase));
+
+            for (int i = 0; i < 9; i++)
+            {
+                var itemStatus = itemCategory_[i].GetComponent<ItemStatus>();
+
+                itemStatus.id = int.Parse(itemCategory[3 * i + 0]);
+                itemStatus.level = int.Parse(itemCategory[3 * i + 1]);
+                itemStatus.num = int.Parse(itemCategory[3 * i + 2]);
+            }
+
+            items.Add(itemCategory_);
+        }
+
+        csvFile = Resources.Load("Data/ItemFirstGet") as TextAsset;
+        reader = new StringReader(csvFile.text);
+
+        List<string[]> Datas = new List<string[]>();
+        while(reader.Peek() > -1)
+        {
+            string line = reader.ReadLine();
+            Datas.Add(line.Split(','));
+        }
+
+        for(int i = 0; i < items.Count; i++)
+        {
+            for(int k = 0; k < items[i].Count; k++)
+            {
+                items[i][k].GetComponent<ItemStatus>().isFirstGet = bool.Parse(Datas[i][k]);
+            }
+        }
+
+        foreach (var itemCategory in items)
+        {
+            foreach (var item in itemCategory)
+            {
+                item.transform.SetParent(transform);
+            }
+        }
+    }
+
+    public void OnApplicationQuit()
+    {
+        StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/Item.csv", false);
+        for (int i = 0; i < items.Count; i++)
+        {
+            string txt = "";
+            for (int k = 0; k < items[i].Count; k++)
+            {
+                var itemStatus = items[i][k].GetComponent<ItemStatus>();
+                txt += itemStatus.id.ToString() + ','
+                    + itemStatus.level.ToString() + ','
+                    + itemStatus.num.ToString();
+
+                if (k != items[i].Count - 1)
+                    txt += ',';
+            }
+
+            sw.WriteLine(txt);
+        }
+
+        sw.Flush();
+        sw.Close();
+
+        sw = new StreamWriter(Application.dataPath + "/Resources/Data/ItemFirstGet.csv", false);
+        for (int i = 0; i < items.Count; i++)
+        {
+            string txt = "";
+            for (int k = 0; k < items[i].Count; k++)
+            {
+                var itemStatus = items[i][k].GetComponent<ItemStatus>();
+                txt += itemStatus.isFirstGet.ToString();
+
+                if (k != items[i].Count - 1)
+                    txt += ',';
+            }
+
+            sw.WriteLine(txt);
+        }
+
+        sw.Flush();
+        sw.Close();
+    }
 
     void DebugItems()
     {
@@ -95,18 +196,12 @@ public class ItemManager : MonoBehaviour
         items.Add(items_);
         itemMaxId = 9;
 
-        foreach(var itemCategory in items)
-        {
-            foreach(var item in itemCategory)
-            {
-                item.transform.SetParent(transform);
-            }
-        }
+        
     }
 
     void Awake()
     {
-        if(instance == null)
+        if (instance == null)
         {
             DontDestroyOnLoad(gameObject);
             instance = this;
@@ -117,12 +212,12 @@ public class ItemManager : MonoBehaviour
             return;
         }
 
-        DebugItems();
+        LoadItem();
     }
 
     void Start()
     {
-        
+
     }
 
     // item獲得時
@@ -212,9 +307,9 @@ public class ItemManager : MonoBehaviour
     // idからitemを返す
     public ItemStatus GetItem(int id)
     {
-        foreach(var itemCategory in items)
+        foreach (var itemCategory in items)
         {
-            foreach(var item in itemCategory)
+            foreach (var item in itemCategory)
             {
                 var itemStatus = item.GetComponent<ItemStatus>();
                 if (id != itemStatus.id)

@@ -13,4 +13,10 @@ public class ItemBoxStatus : MonoBehaviour
         var haveNumText = transform.GetChild(1).GetComponent<Text>();
         haveNumText.text = "x" + haveNum.ToString();
     }
+
+    public void SetItemHaveNum(int haveNum)
+    {
+        var haveNumText = transform.GetChild(1).GetComponent<Text>();
+        haveNumText.text = "x" + haveNum.ToString();
+    }
 }
