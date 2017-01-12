@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO;
 using System;
+using System.Collections.Generic;
 
 
 public class Timer : MonoBehaviour
@@ -16,27 +17,12 @@ public class Timer : MonoBehaviour
         public int minute;
         public float second;
     }
-    public Date startDayDate;
-    public Date lastDate;
-    public Date nowDate;
+    public Date startDate;
+
+    public int expeditionStageNum = -1;
+    public bool isReturn = false;
 
     static private Timer instance = null;
-
-    public void SetStartDayTime()
-    {
-        startDayDate.year = DateTime.Now.Year;
-        startDayDate.month = DateTime.Now.Month;
-        startDayDate.day = DateTime.Now.Day;
-        startDayDate.hour = DateTime.Now.Hour;
-        startDayDate.minute = DateTime.Now.Minute;
-        startDayDate.second = DateTime.Now.Second;
-        nowDate.year = DateTime.Now.Year;
-        nowDate.month = DateTime.Now.Month;
-        nowDate.day = DateTime.Now.Day;
-        nowDate.hour = DateTime.Now.Hour;
-        nowDate.minute = DateTime.Now.Minute;
-        nowDate.second = DateTime.Now.Second;
-    }
 
     void Awake()
     {
@@ -51,52 +37,36 @@ public class Timer : MonoBehaviour
             return;
         }
 
-        LoadLastApplicationEndTime();
-        LoadNowTime();
+        LoadTime();
     }
 
-    private void LoadNowTime()
+    private void LoadTime()
     {
-        nowDate.year = DateTime.Now.Year;
-        nowDate.month = DateTime.Now.Month;
-        nowDate.day = DateTime.Now.Day;
-        nowDate.hour = DateTime.Now.Hour;
-        nowDate.minute = DateTime.Now.Minute;
-        nowDate.second = DateTime.Now.Second;
+        TextAsset csvFile = Resources.Load("Data/Time") as TextAsset;
+        StringReader reader = new StringReader(csvFile.text);
+
+        string line = reader.ReadLine();
+        string[] timeData = line.Split(',');
+
+        startDate.year = int.Parse(timeData[0]);
+        startDate.month = int.Parse(timeData[1]);
+        startDate.day = int.Parse(timeData[2]);
+        startDate.hour = int.Parse(timeData[3]);
+        startDate.minute = int.Parse(timeData[4]);
+        startDate.second = int.Parse(timeData[5]);
+        expeditionStageNum = int.Parse(timeData[6]);
     }
 
-    private void LoadLastApplicationEndTime()
+    public void StartEspedition()
     {
-        string txt = "";
+        startDate.year = DateTime.Now.Year;
+        startDate.month = DateTime.Now.Month;
+        startDate.day = DateTime.Now.Day;
+        startDate.hour = DateTime.Now.Hour;
+        startDate.minute = DateTime.Now.Minute;
+        startDate.second = DateTime.Now.Second;
 
-        FileInfo fi = new FileInfo(Application.dataPath + "/Resources/Data/TimerData.csv");
-        try
-        {
-            using (StreamReader sr = new StreamReader(fi.Open(FileMode.Open, FileAccess.Read)))
-            {
-                txt += sr.ReadToEnd();
-
-                sr.Close();
-            }
-        }
-        catch (Exception e)
-        {
-
-        }
-
-        string[] lastDate_ = txt.Split(',');
-        startDayDate.year = int.Parse(lastDate_[0]);
-        startDayDate.month = int.Parse(lastDate_[1]);
-        startDayDate.day = int.Parse(lastDate_[2]);
-        startDayDate.hour = int.Parse(lastDate_[3]);
-        startDayDate.minute = int.Parse(lastDate_[4]);
-        startDayDate.second = int.Parse(lastDate_[5]);
-        lastDate.year = int.Parse(lastDate_[6]);
-        lastDate.month = int.Parse(lastDate_[7]);
-        lastDate.day = int.Parse(lastDate_[8]);
-        lastDate.hour = int.Parse(lastDate_[9]);
-        lastDate.minute = int.Parse(lastDate_[10]);
-        lastDate.second = float.Parse(lastDate_[11]);
+        isReturn = false;
     }
 
     void Start()
@@ -108,32 +78,49 @@ public class Timer : MonoBehaviour
     {
         while (true)
         {
-            
-
             yield return null;
+            if (expeditionStageNum == -1)
+                continue;
+            if (!isReturn)
+                isReturn = IsReturn();
         }
     }
 
+    bool IsReturn()
+    {
+        if (Mathf.Abs(startDate.year - DateTime.Now.Year) > 0)
+            return true;
+        if (Mathf.Abs(startDate.month - DateTime.Now.Month) > 0)
+            return true;
+        if (Mathf.Abs(startDate.day - DateTime.Now.Day) > 1)
+            return true;
+        else if (Mathf.Abs(startDate.day - DateTime.Now.Day) == 1)
+        {
+            if (24 - startDate.hour + DateTime.Now.Hour >= 2)
+                return true;
+        }
+        else if ((startDate.day - DateTime.Now.Day) == 0)
+        {
+            if (Mathf.Abs(startDate.hour - DateTime.Now.Hour) >= 2)
+                return true;
+        }
 
-    // アプリ終了時に時間を書き込みをしておく
+        return false;
+    }
+
+
     public void OnApplicationQuit()
     {
-        StreamWriter writer;
-        writer = new StreamWriter(Application.dataPath + "/Resources/Data/TimerData.csv", false);
-        writer.WriteLine(startDayDate.year +
-            "," + startDayDate.month +
-            "," + startDayDate.day +
-            "," + startDayDate.hour +
-            "," + startDayDate.minute +
-            "," + startDayDate.second +
-            "," + DateTime.Now.Year +
-            "," + DateTime.Now.Month +
-            "," + DateTime.Now.Day +
-            "," + DateTime.Now.Hour +
-            "," + DateTime.Now.Minute +
-            "," + DateTime.Now.Second +
-            ",");
-        writer.Flush();
-        writer.Close();
+        StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/Time.csv", false);
+        string txt = startDate.year.ToString() + ','
+            + startDate.month.ToString() + ','
+            + startDate.day.ToString() + ','
+            + startDate.hour.ToString() + ','
+            + startDate.minute.ToString() + ','
+            + startDate.second.ToString();
+        sw.WriteLine(txt);
+
+        sw.Flush();
+        sw.Close();
     }
 }

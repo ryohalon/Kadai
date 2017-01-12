@@ -50,15 +50,15 @@ public class ItemManager : MonoBehaviour
         reader = new StringReader(csvFile.text);
 
         List<string[]> Datas = new List<string[]>();
-        while(reader.Peek() > -1)
+        while (reader.Peek() > -1)
         {
             string line = reader.ReadLine();
             Datas.Add(line.Split(','));
         }
 
-        for(int i = 0; i < items.Count; i++)
+        for (int i = 0; i < items.Count; i++)
         {
-            for(int k = 0; k < items[i].Count; k++)
+            for (int k = 0; k < items[i].Count; k++)
             {
                 items[i][k].GetComponent<ItemStatus>().isFirstGet = bool.Parse(Datas[i][k]);
             }
@@ -196,7 +196,7 @@ public class ItemManager : MonoBehaviour
         items.Add(items_);
         itemMaxId = 9;
 
-        
+
     }
 
     void Awake()
@@ -320,5 +320,19 @@ public class ItemManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    public int GetIdInCategoryItemLevel(int category, int level)
+    {
+        foreach (var item in items[category])
+        {
+            var itemStatus = item.GetComponent<ItemStatus>();
+            if (itemStatus.level != level)
+                continue;
+
+            return itemStatus.id;
+        }
+
+        return -1;
     }
 }
