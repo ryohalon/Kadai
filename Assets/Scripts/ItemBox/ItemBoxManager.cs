@@ -117,7 +117,7 @@ public class ItemBoxManager : MonoBehaviour
         for (int i = 0; i < itemBoxs[DisplayCategory].Count; i++)
             itemBoxs[DisplayCategory][i].SetActive(false);
 
-        if (value >= 0)
+        if (value > 0)
             DisplayCategory = Mathf.Min(DisplayCategory + 1, itemBoxs.Count - 1);
         else
             DisplayCategory = Mathf.Max(DisplayCategory - 1, 0);

@@ -20,6 +20,10 @@ public class AlchemyManager : MonoBehaviour
     [SerializeField]
     private GameObject alchemyItem = null;
     private GameObject alchemyItem_ = null;
+    [SerializeField]
+    private GameObject back = null;
+    [SerializeField]
+    private GameObject front = null;
 
     private const int maxUseItemNum = 3;
     private int[] selectItemId = new int[maxUseItemNum];
@@ -44,6 +48,8 @@ public class AlchemyManager : MonoBehaviour
     void Start()
     {
         itemBoxManager.SetAvtiveAllItemBoxs(false);
+        back.SetActive(false);
+        front.SetActive(false);
     }
 
     void Update()
@@ -90,6 +96,8 @@ public class AlchemyManager : MonoBehaviour
             foreach (var selectUseItem in selectUseItems)
                 selectUseItem.SetActive(false);
             letsAlchemy.SetActive(false);
+            back.SetActive(true);
+            front.SetActive(true);
 
             itemBoxManager.SetActiveItemBoxs(true);
             itemBoxManager.LoadItem();
@@ -129,10 +137,30 @@ public class AlchemyManager : MonoBehaviour
         if (!Input.GetMouseButtonDown(0))
             return;
 
+        var button = back.GetComponent<ButtonManager>();
+        if (back.activeInHierarchy)
+            button.UpdateButton();
+        if (button.isPushed)
+        {
+            button.isPushed = false;
+            itemBoxManager.ChangeDisplayItemCategory(-1);
+            return;
+        }
+
+        button = front.GetComponent<ButtonManager>();
+        if (front.activeInHierarchy)
+            button.UpdateButton();
+        if (button.isPushed)
+        {
+            button.isPushed = false;
+            itemBoxManager.ChangeDisplayItemCategory(1);
+            return;
+        }
+
         var itemBoxs = itemBoxManager.itemBoxs;
         foreach (var itemBox in itemBoxs[itemBoxManager.DisplayCategory])
         {
-            var button = itemBox.GetComponent<ButtonManager>();
+            button = itemBox.GetComponent<ButtonManager>();
             if (!button.isPushed)
                 continue;
             var itemBoxStatus = itemBox.GetComponent<ItemBoxStatus>();
@@ -154,6 +182,8 @@ public class AlchemyManager : MonoBehaviour
             letsAlchemy.SetActive(true);
 
             itemBoxManager.SetActiveItemBoxs(false);
+            back.SetActive(false);
+            front.SetActive(false);
 
             status = ActionStatus.SELECTACTION;
 

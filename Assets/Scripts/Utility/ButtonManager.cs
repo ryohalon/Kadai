@@ -14,6 +14,11 @@ public class ButtonManager : MonoBehaviour
 
     void Awake()
     {
+        
+    }
+
+    void Start()
+    {
         myrectTrans = GetComponent<RectTransform>();
 
         var canvas = GameObject.Find("Canvas");
@@ -23,14 +28,10 @@ public class ButtonManager : MonoBehaviour
         windowSizeRatio.y = canvasRefferenceResolution.y / canvasPixelSize.y;
     }
 
-    void Start()
-    {
-
-    }
-
     public void UpdateButton()
     {
-        mousePos = new Vector2(Input.mousePosition.x * windowSizeRatio.x, Input.mousePosition.y * windowSizeRatio.y) - canvasRefferenceResolution / 2.0f;
+        mousePos = new Vector2(Input.mousePosition.x * windowSizeRatio.x, Input.mousePosition.y * windowSizeRatio.y)
+            - canvasRefferenceResolution / 2.0f;
 
         if (isPushed)
         {
@@ -50,6 +51,7 @@ public class ButtonManager : MonoBehaviour
         if (mousePos.x < myrectTrans.localPosition.x - myrectTrans.rect.width / 2.0f ||
             mousePos.x > myrectTrans.localPosition.x + myrectTrans.rect.width / 2.0f)
             return false;
+
         if (mousePos.y < myrectTrans.localPosition.y - myrectTrans.rect.height / 2.0f ||
             mousePos.y > myrectTrans.localPosition.y + myrectTrans.rect.height / 2.0f)
             return false;

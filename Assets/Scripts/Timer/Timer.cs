@@ -7,22 +7,14 @@ using System.Collections.Generic;
 
 public class Timer : MonoBehaviour
 {
-    [System.Serializable]
-    public struct Date
-    {
-        public int year;
-        public int month;
-        public int day;
-        public int hour;
-        public int minute;
-        public float second;
-    }
-    public Date startDate;
+    public DateTime startDate;
 
     public int expeditionStageNum = -1;
     public bool isReturn = false;
 
     static private Timer instance = null;
+
+    List<int[]> stageTimeList = new List<int[]>();
 
     void Awake()
     {
@@ -37,87 +29,119 @@ public class Timer : MonoBehaviour
             return;
         }
 
+        expeditionStageNum = -1;
         LoadTime();
+        LoadStageTime();
     }
 
     private void LoadTime()
     {
-        TextAsset csvFile = Resources.Load("Data/Time") as TextAsset;
+        if (File.Exists(Application.persistentDataPath + "/Time.csv"))
+        {
+            StreamReader sr = new StreamReader(Application.persistentDataPath + "/Time.csv", false);
+            string line = sr.ReadLine();
+            string[] timeData = line.Split(',');
+
+            startDate = new DateTime(int.Parse(timeData[0]),
+            int.Parse(timeData[1]),
+            int.Parse(timeData[2]),
+            int.Parse(timeData[3]),
+            int.Parse(timeData[4]),
+            int.Parse(timeData[5]));
+            expeditionStageNum = int.Parse(timeData[6]);
+
+            Debug.Log(startDate);
+        }
+    }
+
+    private void LoadStageTime()
+    {
+        TextAsset csvFile = Resources.Load("Data/StageTime") as TextAsset;
         StringReader reader = new StringReader(csvFile.text);
 
-        string line = reader.ReadLine();
-        string[] timeData = line.Split(',');
+        while (reader.Peek() > -1)
+        {
+            string line = reader.ReadLine();
+            string[] stageTime = line.Split(',');
 
-        startDate.year = int.Parse(timeData[0]);
-        startDate.month = int.Parse(timeData[1]);
-        startDate.day = int.Parse(timeData[2]);
-        startDate.hour = int.Parse(timeData[3]);
-        startDate.minute = int.Parse(timeData[4]);
-        startDate.second = int.Parse(timeData[5]);
-        expeditionStageNum = int.Parse(timeData[6]);
+            int[] stageTime_ = new int[3];
+            for (int i = 0; i < 3; i++)
+                stageTime_[i] = int.Parse(stageTime[i]);
+
+            stageTimeList.Add(stageTime_);
+        }
     }
 
     public void StartEspedition()
     {
-        startDate.year = DateTime.Now.Year;
-        startDate.month = DateTime.Now.Month;
-        startDate.day = DateTime.Now.Day;
-        startDate.hour = DateTime.Now.Hour;
-        startDate.minute = DateTime.Now.Minute;
-        startDate.second = DateTime.Now.Second;
+        startDate = DateTime.Now;
 
         isReturn = false;
     }
 
     void Start()
     {
-        StartCoroutine(UpdateTimer());
+
     }
 
-    private IEnumerator UpdateTimer()
+    void Update()
     {
-        while (true)
-        {
-            yield return null;
-            if (expeditionStageNum == -1)
-                continue;
-            if (!isReturn)
-                isReturn = IsReturn();
-        }
+        if (expeditionStageNum == -1)
+            return;
+
+        if (!isReturn)
+            isReturn = IsReturn();
+
+        // Debug
+        if (Input.GetKeyDown(KeyCode.F1))
+            isReturn = true;
     }
 
-    bool IsReturn()
+     public bool IsReturn()
     {
-        if (Mathf.Abs(startDate.year - DateTime.Now.Year) > 0)
+        if (expeditionStageNum == -1)
+            return false;
+        TimeSpan delta = DateTime.Now - startDate;
+        int[] stageTime_ = stageTimeList[expeditionStageNum];
+        if (delta.Hours >= stageTime_[0] &&
+            delta.Minutes >= stageTime_[1] &&
+            delta.Seconds >= stageTime_[2])
             return true;
-        if (Mathf.Abs(startDate.month - DateTime.Now.Month) > 0)
-            return true;
-        if (Mathf.Abs(startDate.day - DateTime.Now.Day) > 1)
-            return true;
-        else if (Mathf.Abs(startDate.day - DateTime.Now.Day) == 1)
-        {
-            if (24 - startDate.hour + DateTime.Now.Hour >= 2)
-                return true;
-        }
-        else if ((startDate.day - DateTime.Now.Day) == 0)
-        {
-            if (Mathf.Abs(startDate.hour - DateTime.Now.Hour) >= 2)
-                return true;
-        }
 
         return false;
     }
 
+    public TimeSpan GetTime()
+    {
+        TimeSpan delta = startDate - DateTime.Now;
+
+        return delta;
+    }
+
+    public int[] GetStageTime()
+    {
+        if (expeditionStageNum >= 0)
+            return stageTimeList[expeditionStageNum];
+
+        int[] noStage = { 0, 0, 0 };
+        return noStage;
+    }
 
     public void OnApplicationQuit()
     {
-        StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/Time.csv", false);
-        string txt = startDate.year.ToString() + ','
-            + startDate.month.ToString() + ','
-            + startDate.day.ToString() + ','
-            + startDate.hour.ToString() + ','
-            + startDate.minute.ToString() + ','
-            + startDate.second.ToString();
+
+        FileStream f = (File.Exists(Application.persistentDataPath + "/Time.csv") == true) ?
+            new FileStream(Application.persistentDataPath + "/Time.csv", FileMode.Truncate, FileAccess.Write) :
+            new FileStream(Application.persistentDataPath + "/Time.csv", FileMode.Create, FileAccess.Write);
+
+        StreamWriter sw = new StreamWriter(f);
+        string txt = startDate.Year.ToString() + ','
+            + startDate.Month.ToString() + ','
+            + startDate.Day.ToString() + ','
+            + startDate.Hour.ToString() + ','
+            + startDate.Minute.ToString() + ','
+            + startDate.Second.ToString() + ','
+            + expeditionStageNum.ToString();
         sw.WriteLine(txt);
 
         sw.Flush();

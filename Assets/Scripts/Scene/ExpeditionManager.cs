@@ -40,13 +40,24 @@ public class ExpeditionManager : MonoBehaviour
     void Awake()
     {
         status = ActionStatus.DEFAULT;
-        timer = GameObject.Find("Timer").GetComponent<Timer>();
-        itemManager = GameObject.Find("ItemManager").GetComponent<ItemManager>();
     }
 
     void Start()
     {
+        timer = GameObject.Find("Timer").GetComponent<Timer>();
+        itemManager = GameObject.Find("ItemManager").GetComponent<ItemManager>();
 
+        if(timer.expeditionStageNum != -1)
+        {
+            if (timer.IsReturn())
+                ExpeditionResult();
+            else
+            {
+                timeDisplay.SetActive(true);
+                status = ActionStatus.GOINGEXPEDITION;
+                goExpedition.SetActive(false);
+            }
+        }
     }
 
     void Update()
@@ -109,6 +120,8 @@ public class ExpeditionManager : MonoBehaviour
                 selectStage.SetActive(true);
                 selectStage.transform.GetChild(0).GetComponent<Image>().sprite =
                     stageSprites[i];
+
+                timer.expeditionStageNum = i;
             }
         }
         else
@@ -132,12 +145,16 @@ public class ExpeditionManager : MonoBehaviour
 
                     status = ActionStatus.GOINGEXPEDITION;
 
+                    timer.StartEspedition();
+
                     return;
                 }
                 else if (i == 2)
                 {
                     button.isPushed = false;
                     selectStage.SetActive(false);
+
+                    timer.expeditionStageNum = -1;
 
                     return;
                 }
@@ -154,6 +171,28 @@ public class ExpeditionManager : MonoBehaviour
 
         timeDisplay.SetActive(false);
 
+        ExpeditionResult();
+    }
+
+    void Return()
+    {
+        if (status != ActionStatus.RETURN)
+            return;
+        if (!Logo.GetComponent<AlchemyItemManager>().isEaseEnd)
+            return;
+        if (!Input.GetMouseButtonDown(0))
+            return;
+
+        Destroy(Logo);
+        timer.isReturn = false;
+
+        status = ActionStatus.DEFAULT;
+
+        goExpedition.SetActive(true);
+    }
+
+    void ExpeditionResult()
+    {
         int successDegree = UnityEngine.Random.Range(0, 2);
 
         Logo = Instantiate(successDegreeLogo);
@@ -179,22 +218,7 @@ public class ExpeditionManager : MonoBehaviour
             itemManager.AcquisitionItem(id);
         }
 
+        timer.expeditionStageNum = -1;
         status = ActionStatus.RETURN;
-    }
-
-    void Return()
-    {
-        if (status != ActionStatus.RETURN)
-            return;
-        if (!Logo.GetComponent<AlchemyItemManager>().isEaseEnd)
-            return;
-        if (!Input.GetMouseButtonDown(0))
-            return;
-
-        Destroy(Logo);
-
-        status = ActionStatus.DEFAULT;
-
-        goExpedition.SetActive(true);
     }
 }

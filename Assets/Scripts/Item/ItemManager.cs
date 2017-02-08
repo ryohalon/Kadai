@@ -2,6 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using MiniJSON;
+using UnityEngine.UI;
+using System.Text;
+
 
 public class ItemManager : MonoBehaviour
 {
@@ -15,6 +19,57 @@ public class ItemManager : MonoBehaviour
     public int itemMaxId = 0;
 
     private ItemManager instance = null;
+
+    private IEnumerator LoadItem2()
+    {
+        TextAsset csvFile = Resources.Load("Data/Item") as TextAsset;
+        StringReader reader = new StringReader(csvFile.text);
+
+        List<string[]> itemDatas = new List<string[]>();
+        while (reader.Peek() > -1)
+        {
+            string line = reader.ReadLine();
+            itemDatas.Add(line.Split(','));
+        }
+
+        foreach (var itemCategory in itemDatas)
+        {
+            List<GameObject> itemCategory_ = new List<GameObject>();
+            for (int i = 0; i < 9; i++)
+                itemCategory_.Add(Instantiate(itemBase));
+
+            for (int i = 0; i < 9; i++)
+            {
+                var itemStatus = itemCategory_[i].GetComponent<ItemStatus>();
+
+                itemStatus.id = int.Parse(itemCategory[2 * i + 0]);
+                itemStatus.level = int.Parse(itemCategory[2 * i + 1]);
+            }
+
+            items.Add(itemCategory_);
+        }
+
+        string url = "http://localhost:57223/api/Sample";
+        WWW www = new WWW(url);
+
+        yield return www;
+        
+        List<List<int>> nums = Json.Deserialize(www.text) as List<List<int>>;
+
+        Debug.Log(nums);
+        Debug.Log("i : " + nums.Count);
+        Debug.Log("k : " + nums[0].Count);
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            for(int k = 0; k < items[i].Count; k++)
+            {
+                Debug.Log("i : " + i);
+                Debug.Log("k : " + k);
+                items[i][k].GetComponent<ItemStatus>().num = nums[i][k];
+            }
+        }
+    }
 
     void LoadItem()
     {
@@ -71,32 +126,65 @@ public class ItemManager : MonoBehaviour
                 item.transform.SetParent(transform);
             }
         }
+
+
+        for(int i = 0; i < sprites.Count / 9; i++)
+        {
+            for (int k = 0; k < 9; k++)
+            {
+                items[i][k].GetComponent<ItemStatus>().sprite = sprites[i * 9 + k];
+            }
+        }
+    }
+
+    IEnumerator Save()
+    {
+        Dictionary<string, string> header = new Dictionary<string, string>
+        {
+            {"Content-Type", "applicatioin/json" }
+        };
+
+        string json = "{";
+        for (int i = 0; i < items.Count; i++)
+        {
+            for (int k = 0; k < items[i].Count; k++)
+                json += "\"itemNum[" + i.ToString() + "][" + k.ToString() + "]\":" + items[i][k].GetComponent<ItemStatus>().num;
+        }
+        json += "}";
+
+        byte[] data = Encoding.UTF8.GetBytes(json);
+
+        string url = "http://localhost:57223/api/Sample";
+        var wwwPost = new WWW(url, data, header);
+        yield return wwwPost;
     }
 
     public void OnApplicationQuit()
     {
-        StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/Item.csv", false);
-        for (int i = 0; i < items.Count; i++)
-        {
-            string txt = "";
-            for (int k = 0; k < items[i].Count; k++)
-            {
-                var itemStatus = items[i][k].GetComponent<ItemStatus>();
-                txt += itemStatus.id.ToString() + ','
-                    + itemStatus.level.ToString() + ','
-                    + itemStatus.num.ToString();
+        StartCoroutine(Save());
 
-                if (k != items[i].Count - 1)
-                    txt += ',';
-            }
+        //StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/Item.csv", false);
+        //for (int i = 0; i < items.Count; i++)
+        //{
+        //    string txt = "";
+        //    for (int k = 0; k < items[i].Count; k++)
+        //    {
+        //        var itemStatus = items[i][k].GetComponent<ItemStatus>();
+        //        txt += itemStatus.id.ToString() + ','
+        //            + itemStatus.level.ToString() + ','
+        //            + itemStatus.num.ToString();
 
-            sw.WriteLine(txt);
-        }
+        //        if (k != items[i].Count - 1)
+        //            txt += ',';
+        //    }
 
-        sw.Flush();
-        sw.Close();
+        //    sw.WriteLine(txt);
+        //}
 
-        sw = new StreamWriter(Application.dataPath + "/Resources/Data/ItemFirstGet.csv", false);
+        //sw.Flush();
+        //sw.Close();
+
+        StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/ItemFirstGet.csv", false);
         for (int i = 0; i < items.Count; i++)
         {
             string txt = "";
@@ -212,7 +300,7 @@ public class ItemManager : MonoBehaviour
             return;
         }
 
-        LoadItem();
+        StartCoroutine(LoadItem2());
     }
 
     void Start()
