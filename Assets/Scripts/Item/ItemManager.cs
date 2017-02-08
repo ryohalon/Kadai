@@ -42,8 +42,9 @@ public class ItemManager : MonoBehaviour
             {
                 var itemStatus = itemCategory_[i].GetComponent<ItemStatus>();
 
-                itemStatus.id = int.Parse(itemCategory[2 * i + 0]);
-                itemStatus.level = int.Parse(itemCategory[2 * i + 1]);
+                itemStatus.id = int.Parse(itemCategory[3 * i + 0]);
+                itemStatus.level = int.Parse(itemCategory[3 * i + 1]);
+                itemStatus.name = itemCategory[3 * i + 2];
             }
 
             items.Add(itemCategory_);
@@ -65,6 +66,7 @@ public class ItemManager : MonoBehaviour
             {
                 ItemStatus status = items[i][k].GetComponent<ItemStatus>();
                 status.num = nums[status.id];
+                status.isFirstGet = (status.num > 0) ? true : false;
             }
         }
     }
@@ -91,8 +93,9 @@ public class ItemManager : MonoBehaviour
             {
                 var itemStatus = itemCategory_[i].GetComponent<ItemStatus>();
 
-                itemStatus.id = int.Parse(itemCategory[2 * i + 0]);
-                itemStatus.level = int.Parse(itemCategory[2 * i + 1]);
+                itemStatus.id = int.Parse(itemCategory[3 * i + 0]);
+                itemStatus.level = int.Parse(itemCategory[3 * i + 1]);
+                itemStatus.name = itemCategory[3 * i + 2];
                 // Debug
                 itemStatus.num = 0;
                 itemStatus.isFirstGet = (itemStatus.num > 0) ? true : false;
@@ -117,6 +120,8 @@ public class ItemManager : MonoBehaviour
                 items[i][k].GetComponent<ItemStatus>().sprite = sprites[i * 9 + k];
             }
         }
+
+        itemMaxId = items.Count * items[0].Count;
     }
 
     IEnumerator Save()
@@ -294,6 +299,26 @@ public class ItemManager : MonoBehaviour
 
         Debug.Log("Not exist item : id");
         return int.MinValue;
+    }
+
+    public string GetItemName(int id)
+    {
+        if (id < 0 || id >= itemMaxId)
+            return "null";
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            for (int k = 0; k < items[i].Count; k++)
+            {
+                var itemStatus = items[i][k].GetComponent<ItemStatus>();
+                if (itemStatus.id != id)
+                    continue;
+
+                return itemStatus.name;
+            }
+        }
+
+        return "null";
     }
 
     // idからitemを返す

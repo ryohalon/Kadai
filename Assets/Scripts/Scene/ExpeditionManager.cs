@@ -11,8 +11,6 @@ public class ExpeditionManager : MonoBehaviour
     private GameObject map = null;
     [SerializeField]
     private List<GameObject> stages = new List<GameObject>();
-    //[SerializeField]
-    //private List<Sprite> stageSprites = new List<Sprite>();
     [SerializeField]
     private GameObject selectStage = null;
     [SerializeField]
@@ -24,6 +22,10 @@ public class ExpeditionManager : MonoBehaviour
     private GameObject Logo = null;
     [SerializeField]
     private List<Sprite> logos = new List<Sprite>();
+    [SerializeField]
+    private GameObject textBox = null;
+    
+    private List<string> getItemNames = new List<string>();
 
     public int minGetItemNum = 6;
     public int maxGetItemNum = 12;
@@ -50,7 +52,10 @@ public class ExpeditionManager : MonoBehaviour
         if(timer.expeditionStageNum != -1)
         {
             if (timer.IsReturn())
+            {
+                goExpedition.SetActive(false);
                 ExpeditionResult();
+            }
             else
             {
                 timeDisplay.SetActive(true);
@@ -182,6 +187,16 @@ public class ExpeditionManager : MonoBehaviour
             return;
         if (!Logo.GetComponent<AlchemyItemManager>().isEaseEnd)
             return;
+        else if (textBox.activeInHierarchy == false)
+        {
+            textBox.SetActive(true);
+            textBox.GetComponent<TextBox>().isEnd = false;
+            textBox.GetComponent<TextBox>().AddGetItem(new List<string>(getItemNames));
+            textBox.GetComponent<TextBox>().UpdateText();
+            getItemNames.Clear();
+        }
+        if (!textBox.GetComponent<TextBox>().isEnd)
+            return;
         if (!Input.GetMouseButtonDown(0))
             return;
 
@@ -191,6 +206,7 @@ public class ExpeditionManager : MonoBehaviour
         status = ActionStatus.DEFAULT;
 
         goExpedition.SetActive(true);
+        textBox.SetActive(false);
     }
 
     void ExpeditionResult()
@@ -213,11 +229,12 @@ public class ExpeditionManager : MonoBehaviour
 
         for (int i = 0; i < getItemNum; i++)
         {
-            int getItemLevel = UnityEngine.Random.Range(0, 5);
+            int getItemLevel = UnityEngine.Random.Range(1, 5);
             getItemLevel -= UnityEngine.Random.Range(0, getItemLevel);
 
             int id = itemManager.GetIdInCategoryItemLevel(timer.expeditionStageNum, getItemLevel);
             itemManager.AcquisitionItem(id);
+            getItemNames.Add("「" + itemManager.GetItemName(id) + "」を獲得しました");
         }
 
         timer.expeditionStageNum = -1;

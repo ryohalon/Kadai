@@ -9,4 +9,5 @@ public class ItemStatus : MonoBehaviour
     public int num = 0;
     public bool isFirstGet = false;
     public Sprite sprite = null;
+    public string name = null;
 }
