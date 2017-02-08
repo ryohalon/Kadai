@@ -53,20 +53,18 @@ public class ItemManager : MonoBehaviour
         WWW www = new WWW(url);
 
         yield return www;
-        
-        List<List<int>> nums = Json.Deserialize(www.text) as List<List<int>>;
 
+        Dictionary<int, int> nums = Json.Deserialize(www.text) as Dictionary<int, int>;
+
+        Debug.Log(www.text);
         Debug.Log(nums);
-        Debug.Log("i : " + nums.Count);
-        Debug.Log("k : " + nums[0].Count);
 
         for (int i = 0; i < items.Count; i++)
         {
             for(int k = 0; k < items[i].Count; k++)
             {
-                Debug.Log("i : " + i);
-                Debug.Log("k : " + k);
-                items[i][k].GetComponent<ItemStatus>().num = nums[i][k];
+                ItemStatus status = items[i][k].GetComponent<ItemStatus>();
+                status.num = nums[status.id];
             }
         }
     }
@@ -93,30 +91,14 @@ public class ItemManager : MonoBehaviour
             {
                 var itemStatus = itemCategory_[i].GetComponent<ItemStatus>();
 
-                itemStatus.id = int.Parse(itemCategory[3 * i + 0]);
-                itemStatus.level = int.Parse(itemCategory[3 * i + 1]);
-                itemStatus.num = int.Parse(itemCategory[3 * i + 2]);
+                itemStatus.id = int.Parse(itemCategory[2 * i + 0]);
+                itemStatus.level = int.Parse(itemCategory[2 * i + 1]);
+                // Debug
+                itemStatus.num = 0;
+                itemStatus.isFirstGet = (itemStatus.num > 0) ? true : false;
             }
 
             items.Add(itemCategory_);
-        }
-
-        csvFile = Resources.Load("Data/ItemFirstGet") as TextAsset;
-        reader = new StringReader(csvFile.text);
-
-        List<string[]> Datas = new List<string[]>();
-        while (reader.Peek() > -1)
-        {
-            string line = reader.ReadLine();
-            Datas.Add(line.Split(','));
-        }
-
-        for (int i = 0; i < items.Count; i++)
-        {
-            for (int k = 0; k < items[i].Count; k++)
-            {
-                items[i][k].GetComponent<ItemStatus>().isFirstGet = bool.Parse(Datas[i][k]);
-            }
         }
 
         foreach (var itemCategory in items)
@@ -148,7 +130,11 @@ public class ItemManager : MonoBehaviour
         for (int i = 0; i < items.Count; i++)
         {
             for (int k = 0; k < items[i].Count; k++)
-                json += "\"itemNum[" + i.ToString() + "][" + k.ToString() + "]\":" + items[i][k].GetComponent<ItemStatus>().num;
+            {
+                ItemStatus status = items[i][k].GetComponent<ItemStatus>();
+                json += "\"" + status.id.ToString() +"\":" + status.num;
+            }
+                
         }
         json += "}";
 
@@ -161,7 +147,7 @@ public class ItemManager : MonoBehaviour
 
     public void OnApplicationQuit()
     {
-        StartCoroutine(Save());
+        //StartCoroutine(Save());
 
         //StreamWriter sw = new StreamWriter(Application.dataPath + "/Resources/Data/Item.csv", false);
         //for (int i = 0; i < items.Count; i++)
@@ -204,89 +190,6 @@ public class ItemManager : MonoBehaviour
         sw.Close();
     }
 
-    void DebugItems()
-    {
-        int i = 0;
-        List<GameObject> items_ = new List<GameObject>();
-        ItemStatus itemStatus;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 1;
-        itemStatus.level = 1;
-        itemStatus.num = 1;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 2;
-        itemStatus.level = 2;
-        itemStatus.num = 2;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 3;
-        itemStatus.level = 3;
-        itemStatus.num = 3;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 4;
-        itemStatus.level = 4;
-        itemStatus.num = 5;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 5;
-        itemStatus.level = 5;
-        itemStatus.num = 5;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 6;
-        itemStatus.level = 6;
-        itemStatus.num = 5;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 7;
-        itemStatus.level = 7;
-        itemStatus.num = 5;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 8;
-        itemStatus.level = 8;
-        itemStatus.num = 5;
-        itemStatus.sprite = sprites[i];
-        i++;
-
-        items_.Add(Instantiate(itemBase));
-        itemStatus = items_[i].GetComponent<ItemStatus>();
-        itemStatus.id = 9;
-        itemStatus.level = 9;
-        itemStatus.num = 5;
-        itemStatus.sprite = sprites[i];
-
-        items.Add(items_);
-        itemMaxId = 9;
-
-
-    }
-
     void Awake()
     {
         if (instance == null)
@@ -300,7 +203,8 @@ public class ItemManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(LoadItem2());
+        //StartCoroutine(LoadItem2());
+        LoadItem();
     }
 
     void Start()

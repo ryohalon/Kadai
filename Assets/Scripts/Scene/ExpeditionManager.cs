@@ -11,8 +11,8 @@ public class ExpeditionManager : MonoBehaviour
     private GameObject map = null;
     [SerializeField]
     private List<GameObject> stages = new List<GameObject>();
-    [SerializeField]
-    private List<Sprite> stageSprites = new List<Sprite>();
+    //[SerializeField]
+    //private List<Sprite> stageSprites = new List<Sprite>();
     [SerializeField]
     private GameObject selectStage = null;
     [SerializeField]
@@ -71,8 +71,8 @@ public class ExpeditionManager : MonoBehaviour
         }
         if (selectStage.activeInHierarchy)
         {
-            selectStage.transform.GetChild(1).GetComponent<ButtonManager>().UpdateButton();
             selectStage.transform.GetChild(2).GetComponent<ButtonManager>().UpdateButton();
+            selectStage.transform.GetChild(3).GetComponent<ButtonManager>().UpdateButton();
         }
 
         GoExpedition();
@@ -119,20 +119,22 @@ public class ExpeditionManager : MonoBehaviour
 
                 selectStage.SetActive(true);
                 selectStage.transform.GetChild(0).GetComponent<Image>().sprite =
-                    stageSprites[i];
+                    stages[i].GetComponent<StageStatus>().sprite;
+                selectStage.transform.GetChild(1).GetChild(0).GetComponent<Text>().text =
+                    stages[i].GetComponent<StageStatus>().stageName;
 
                 timer.expeditionStageNum = i;
             }
         }
         else
         {
-            for (int i = 1; i < selectStage.transform.childCount; i++)
+            for (int i = 2; i < selectStage.transform.childCount; i++)
             {
                 button = selectStage.transform.GetChild(i).GetComponent<ButtonManager>();
                 if (!button.isPushed)
                     continue;
 
-                if (i == 1)
+                if (i == 2)
                 {
                     button.isPushed = false;
 
@@ -149,7 +151,7 @@ public class ExpeditionManager : MonoBehaviour
 
                     return;
                 }
-                else if (i == 2)
+                else if (i == 3)
                 {
                     button.isPushed = false;
                     selectStage.SetActive(false);
